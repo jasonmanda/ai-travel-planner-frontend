@@ -144,23 +144,49 @@
         <button class="text-button" (click)="startOver()">Modifier mes critères ↗</button>
       </div>
       <div class="result-summary"><span class="summary-sparkle">✦</span><span><b>{{ adults }} adulte(s), {{ children }} enfant(s) · {{ duration }} jours</b><small>Départ : {{ departureCity }} · Budget : {{ budget | number:'1.0-0' }} FCFA</small></span><span class="summary-pill">Voyage {{ createdTripId() }}</span></div>
-      <div class="destination-grid">
+      <div class="destination-grid" *ngIf="recommendations.length > 0; else noRecommendations">
         <article class="destination-card" *ngFor="let destination of recommendations">
           <div class="destination-image" [style.background-image]="'url(' + destinationImage(destination.city) + ')'">
             <span class="match-badge">✦ {{ destination.score }}% de compatibilité</span>
-            <button class="favorite-button" aria-label="Ajouter aux favoris">♡</button>
           </div>
           <div class="destination-body">
             <div class="destination-country">{{ destination.country }}</div>
             <h3>{{ destination.city }}</h3>
             <p>{{ destination.explanation }}</p>
-            <div class="tag-list"><span *ngFor="let tag of destination.matchedInterests">{{ tag }}</span></div>
-            <div class="destination-meta"><span>{{ destination.budgetStatus === 'WITHIN_BUDGET' ? 'Dans le budget estimé' : 'Dépasse le budget estimé' }}</span><b>{{ destination.estimatedTripBudget | number:'1.0-0' }} {{ destination.currency }}</b></div>
-            <button class="outline-button" type="button">Découvrir cette destination <span>↗</span></button>
+            <div class="tag-list" *ngIf="destination.matchedInterests?.length">
+              <span *ngFor="let tag of destination.matchedInterests">{{ tag }}</span>
+            </div>
+
+            <div class="score-details" *ngIf="scoreEntries(destination).length">
+              <div class="score-details-title">Détail du score</div>
+              <div class="score-row" *ngFor="let item of scoreEntries(destination)">
+                <div class="score-row-label"><span>{{ item.label }}</span><b>{{ item.value }}%</b></div>
+                <div class="score-track"><span [style.width.%]="item.value"></span></div>
+              </div>
+            </div>
+
+            <div class="destination-meta">
+              <span>{{ budgetStatusLabel(destination.budgetStatus) }}</span>
+              <b *ngIf="destination.currency; else unavailableCurrency">{{ destination.estimatedTripBudget | number:'1.0-0' }} {{ destination.currency }}</b>
+              <ng-template #unavailableCurrency><b>Devise non renseignée</b></ng-template>
+            </div>
+            <div class="estimate-info">
+              <small *ngIf="destination.estimateBasis">Base : {{ destination.estimateBasis }}</small>
+              <small *ngIf="destination.estimateLimitations">{{ destination.estimateLimitations }}</small>
+            </div>
+
+            <div class="not-evaluated" *ngIf="notEvaluatedLabelsFor(destination).length">
+              <b>Critères non encore évalués</b>
+              <ul><li *ngFor="let criterion of notEvaluatedLabelsFor(destination)">{{ criterion }}</li></ul>
+            </div>
+            <button class="outline-button" type="button" (click)="selectTab('Mon voyage')">Ajuster mon voyage <span>↗</span></button>
           </div>
         </article>
       </div>
-      <p class="disclaimer">Estimations indicatives issues du catalogue de démonstration. Elles ne constituent pas des prix vérifiés et peuvent exclure le transport international, les formalités et certains frais de séjour.</p>
+      <ng-template #noRecommendations>
+        <div class="empty-recommendations">Aucune destination ne correspond aux données disponibles pour le moment. Essayez d'élargir vos intérêts ou votre budget.</div>
+      </ng-template>
+      <p class="disclaimer">Les scores sont calculés par le moteur métier à partir du catalogue disponible. Les budgets sont des estimations indicatives, non des prix vérifiés. Les critères signalés comme non évalués ne sont pas pris en compte dans le classement.</p>
     </section>
 
     <section class="how-section" id="comment-ca-marche">

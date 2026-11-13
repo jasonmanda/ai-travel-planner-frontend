@@ -40,12 +40,26 @@ export interface Recommendation {
   destinationId: number;
   city: string;
   country: string;
+  countryCode?: string;
   score: number;
+  scoreBreakdown?: {
+    interests: number;
+    budget: number;
+    travelStyle: number;
+    preferredDestination: number;
+  };
   estimatedTripBudget: number;
-  currency: string;
-  budgetStatus: 'WITHIN_BUDGET' | 'OVER_BUDGET_ESTIMATE' | string;
+  currency: string | null;
+  requestedBudget?: number;
+  requestedBudgetCurrency?: string;
+  budgetStatus: 'WITHIN_BUDGET' | 'OVER_BUDGET_ESTIMATE' | 'CURRENCY_NOT_COMPARABLE' | string;
   explanation: string;
   matchedInterests: string[];
+  estimateBasis?: string;
+  estimateLimitations?: string;
+  notEvaluatedCriteria?: string[];
+  latitude?: number | null;
+  longitude?: number | null;
   generatedAt: string;
 }
 

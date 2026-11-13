@@ -13,6 +13,18 @@ import { TripService, Recommendation } from './trip.service';
 export class AppComponent {
   private readonly tripService = inject(TripService);
   recommendations: Recommendation[] = [];
+  readonly criterionLabels: Record<string, string> = {
+    interests: 'Correspondance avec vos intérêts',
+    budget: 'Adéquation du budget',
+    travelStyle: 'Style de voyage',
+    preferredDestination: 'Destination préférée'
+  };
+  readonly notEvaluatedLabels: Record<string, string> = {
+    nationality_and_entry_formalities: 'Nationalité et formalités d’entrée',
+    travel_period_and_seasonality: 'Période et saisonnalité',
+    departure_transport_cost: 'Coût du transport depuis le départ',
+    destination_scope: 'Périmètre géographique demandé'
+  };
   errorMessage = signal('');
   createdTripId = signal<string | null>(null);
   activeTab = signal('Découvrir');
@@ -76,6 +88,25 @@ export class AppComponent {
     } finally {
       this.isGenerating.set(false);
     }
+  }
+
+  scoreEntries(destination: Recommendation): { key: string; label: string; value: number }[] {
+    return Object.entries(destination.scoreBreakdown ?? {}).map(([key, value]) => ({
+      key,
+      label: this.criterionLabels[key] ?? key,
+      value
+    }));
+  }
+
+  notEvaluatedLabelsFor(destination: Recommendation): string[] {
+    return (destination.notEvaluatedCriteria ?? []).map(key => this.notEvaluatedLabels[key] ?? key);
+  }
+
+  budgetStatusLabel(status: string): string {
+    if (status === 'WITHIN_BUDGET') return 'Dans le budget estimé';
+    if (status === 'OVER_BUDGET_ESTIMATE') return 'Au-dessus du budget estimé';
+    if (status === 'CURRENCY_NOT_COMPARABLE') return 'Comparaison impossible : devises différentes';
+    return 'Budget à vérifier';
   }
 
   destinationImage(city: string): string {
