@@ -76,6 +76,27 @@ export interface Destination {
   longitude: number | null;
 }
 
+
+export interface CatalogItem {
+  id?: number; name?: string; category?: string; description?: string;
+  latitude?: number | null; longitude?: number | null;
+  estimatedCost?: number | null; estimatedAmount?: number | null;
+  estimatedDurationMinutes?: number | null; currency?: string | null;
+  dataStatus?: string; sourceName?: string | null; sourceUrl?: string | null;
+  suitableForFamilies?: boolean; minAgeYears?: number | null;
+  componentKey?: string; label?: string; pricingBasis?: string;
+  month?: number; seasonType?: string; summary?: string;
+}
+
+export interface DestinationCatalog {
+  destination: Record<string, unknown>;
+  attractions: CatalogItem[];
+  activities: CatalogItem[];
+  budget: CatalogItem[];
+  seasons: CatalogItem[];
+  dataPolicy: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private readonly http = inject(HttpClient);
@@ -85,6 +106,13 @@ export class TripService {
   getDestinations(): Promise<Destination[]> {
     return firstValueFrom(
       this.http.get<Destination[]>(`${this.apiUrl}/destinations`)
+    );
+  }
+
+  /** GET /api/v1/destinations/{cityId}/catalog : détails du catalogue d'une ville. */
+  getDestinationCatalog(cityId: number): Promise<DestinationCatalog> {
+    return firstValueFrom(
+      this.http.get<DestinationCatalog>(`${this.apiUrl}/destinations/${cityId}/catalog`)
     );
   }
 

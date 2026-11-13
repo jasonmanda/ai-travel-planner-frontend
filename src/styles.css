@@ -1179,3 +1179,49 @@ a {
   font-size: 12px;
   line-height: 1.7;
 }
+
+.catalog-panel {
+  margin: 42px 0;
+  padding: 28px;
+  border: 1px solid #e7e5df;
+  border-radius: 22px;
+  background: #fff;
+}
+.catalog-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.catalog-block {
+  padding: 20px;
+  border: 1px solid #eeece6;
+  border-radius: 16px;
+  background: #fcfbf8;
+}
+.catalog-block h3 {
+  margin: 0 0 14px;
+}
+.catalog-item {
+  padding: 13px 0;
+  border-top: 1px solid #eae8e2;
+}
+.catalog-item b,
+.catalog-item span {
+  display: block;
+}
+.catalog-item span,
+.catalog-item small {
+  color: #77766f;
+  font-size: 0.82rem;
+}
+.catalog-item p {
+  margin: 7px 0;
+}
+@media (max-width: 760px) {
+  .catalog-columns {
+    grid-template-columns: 1fr;
+  }
+  .catalog-panel {
+    padding: 16px;
+  }
+}

@@ -179,13 +179,39 @@
               <b>Critères non encore évalués</b>
               <ul><li *ngFor="let criterion of notEvaluatedLabelsFor(destination)">{{ criterion }}</li></ul>
             </div>
-            <button class="outline-button" type="button" (click)="selectTab('Mon voyage')">Ajuster mon voyage <span>↗</span></button>
+            <button class="outline-button" type="button" (click)="openDestinationCatalog(destination)" [disabled]="catalogLoading()">{{ catalogLoading() ? 'Chargement…' : 'Explorer cette destination' }} <span>↗</span></button>
           </div>
         </article>
       </div>
       <ng-template #noRecommendations>
         <div class="empty-recommendations">Aucune destination ne correspond aux données disponibles pour le moment. Essayez d'élargir vos intérêts ou votre budget.</div>
       </ng-template>
+      <section class="catalog-panel" id="destination-catalog" *ngIf="selectedCatalog() as catalog">
+        <div class="section-heading results-heading">
+          <div><div class="eyebrow">GUIDE DE DESTINATION</div><h2>{{ catalog.destination['city'] }}<span>.</span></h2><p>{{ catalog.destination['country'] }} · Informations issues du catalogue.</p></div>
+          <button class="text-button" type="button" (click)="closeDestinationCatalog()">Fermer ×</button>
+        </div>
+        <p class="disclaimer">{{ catalog.dataPolicy }}</p>
+        <div class="catalog-columns">
+          <article class="catalog-block"><h3>Attractions ({{ catalog.attractions.length }})</h3>
+            <div class="catalog-item" *ngFor="let item of catalog.attractions"><b>{{ item.name }}</b><span>{{ item.category || 'Catégorie non renseignée' }} · {{ dataStatusLabel(item.dataStatus) }}</span><p>{{ item.description || 'Description non disponible.' }}</p><small *ngIf="item.estimatedCost != null">Coût indicatif : {{ item.estimatedCost | number:'1.0-0' }} {{ item.currency || '' }}</small></div>
+            <p *ngIf="!catalog.attractions.length">Aucune attraction renseignée.</p>
+          </article>
+          <article class="catalog-block"><h3>Activités ({{ catalog.activities.length }})</h3>
+            <div class="catalog-item" *ngFor="let item of catalog.activities"><b>{{ item.name }}</b><span>{{ item.category || 'Catégorie non renseignée' }} · {{ dataStatusLabel(item.dataStatus) }}</span><p>{{ item.description || 'Description non disponible.' }}</p><small>{{ formatDuration(item.estimatedDurationMinutes??0) }}<ng-container *ngIf="item.estimatedCost != null"> · {{ item.estimatedCost | number:'1.0-0' }} {{ item.currency || '' }}</ng-container></small></div>
+            <p *ngIf="!catalog.activities.length">Aucune activité renseignée.</p>
+          </article>
+          <article class="catalog-block"><h3>Budget indicatif</h3>
+            <div class="catalog-item" *ngFor="let item of catalog.budget"><b>{{ item.label || item.componentKey }}</b><span>{{ dataStatusLabel(item.dataStatus) }} · {{ item.pricingBasis || 'Base non précisée' }}</span><p *ngIf="item.estimatedAmount != null">{{ item.estimatedAmount | number:'1.0-0' }} {{ item.currency || '' }}</p><p *ngIf="item.estimatedAmount == null">Montant non renseigné.</p></div>
+            <p *ngIf="!catalog.budget.length">Aucune composante budgétaire renseignée.</p>
+          </article>
+          <article class="catalog-block"><h3>Saisonnalité</h3>
+            <div class="catalog-item" *ngFor="let item of catalog.seasons"><b>Mois {{ item.month }}</b><span>{{ item.seasonType || 'Saison non précisée' }} · {{ dataStatusLabel(item.dataStatus) }}</span><p>{{ item.summary || 'Information non disponible.' }}</p></div>
+            <p *ngIf="!catalog.seasons.length">Aucune information saisonnière renseignée.</p>
+          </article>
+        </div>
+      </section>
+      <p class="disclaimer" *ngIf="catalogError()" role="alert">{{ catalogError() }}</p>
       <p class="disclaimer">Les scores sont calculés par le moteur métier à partir du catalogue disponible. Les budgets sont des estimations indicatives, non des prix vérifiés. Les critères signalés comme non évalués ne sont pas pris en compte dans le classement.</p>
     </section>
 

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { TripService, Recommendation } from './trip.service';
+import { TripService, Recommendation, DestinationCatalog } from './trip.service';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +13,9 @@ import { TripService, Recommendation } from './trip.service';
 export class AppComponent {
   private readonly tripService = inject(TripService);
   recommendations: Recommendation[] = [];
+  selectedCatalog = signal<DestinationCatalog | null>(null);
+  catalogLoading = signal(false);
+  catalogError = signal('');
   readonly criterionLabels: Record<string, string> = {
     interests: 'Correspondance avec vos intérêts',
     budget: 'Adéquation du budget',
@@ -88,6 +91,37 @@ export class AppComponent {
     } finally {
       this.isGenerating.set(false);
     }
+  }
+
+  async openDestinationCatalog(destination: Recommendation): Promise<void> {
+    this.selectedCatalog.set(null);
+    this.catalogError.set('');
+    this.catalogLoading.set(true);
+    try {
+      const catalog = await this.tripService.getDestinationCatalog(destination.destinationId);
+      this.selectedCatalog.set(catalog);
+      setTimeout(() => document.getElementById('destination-catalog')?.scrollIntoView({ behavior: 'smooth' }), 0);
+    } catch (error: any) {
+      this.catalogError.set(error?.error?.detail || error?.error?.message || 'Impossible de charger le catalogue de cette destination.');
+    } finally {
+      this.catalogLoading.set(false);
+    }
+  }
+
+  closeDestinationCatalog(): void { this.selectedCatalog.set(null); }
+
+  dataStatusLabel(status?: string): string {
+    if (status === 'VERIFIED') return 'Vérifié';
+    if (status === 'UNVERIFIED') return 'Non vérifié';
+    if (status === 'ESTIMATED') return 'Estimatif';
+    return status || 'Statut non renseigné';
+  }
+
+  formatDuration(minutes?: number): string {
+    if (minutes == null) return 'Durée non renseignée';
+    const hours = Math.floor(minutes / 60);
+    const remaining = minutes % 60;
+    return hours ? `${hours} h${remaining ? ` ${remaining} min` : ''}` : `${minutes} min`;
   }
 
   scoreEntries(destination: Recommendation): { key: string; label: string; value: number }[] {
