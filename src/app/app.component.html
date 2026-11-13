@@ -1,0 +1,182 @@
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="#" (click)="selectTab('Découvrir'); $event.preventDefault()">
+      <span class="brand-mark"><span></span><span></span><span></span></span>
+      <span>voyagea<span class="brand-dot">.</span></span>
+    </a>
+
+    <nav class="desktop-nav" aria-label="Navigation principale">
+      <button [class.active]="activeTab() === 'Découvrir'" (click)="selectTab('Découvrir')">Découvrir</button>
+      <button [class.active]="activeTab() === 'Mon voyage'" (click)="selectTab('Mon voyage')">Mon voyage</button>
+      <a href="#comment-ca-marche">Comment ça marche</a>
+    </nav>
+
+    <div class="header-actions">
+      <span class="language"><span>FR</span>⌄</span>
+      <button class="profile-button" aria-label="Profil utilisateur">JD</button>
+      <button class="mobile-menu" (click)="mobileMenuOpen.set(!mobileMenuOpen())" aria-label="Ouvrir le menu">☰</button>
+    </div>
+    <nav class="mobile-nav" *ngIf="mobileMenuOpen()">
+      <button (click)="selectTab('Découvrir')">Découvrir</button>
+      <button (click)="selectTab('Mon voyage')">Mon voyage</button>
+      <a href="#comment-ca-marche">Comment ça marche</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="sparkle">✳</span> LE VOYAGE, PENSÉ POUR VOUS</div>
+        <h1>Le monde est vaste.<br><em>Votre voyage</em> est unique.</h1>
+        <p class="hero-description">Dites-nous ce qui vous fait rêver. Notre assistant intelligent imagine le voyage qui vous ressemble, selon vos envies et votre budget.</p>
+        <div class="hero-points">
+          <span><i>✓</i> Recommandations personnalisées</span>
+          <span><i>✓</i> Budget maîtrisé</span>
+          <span><i>✓</i> Itinéraire sur mesure</span>
+        </div>
+        <a class="primary-button hero-cta" href="#planner">Imaginer mon voyage <span>↗</span></a>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-photo"></div>
+        <div class="photo-label"><span class="label-icon">✦</span><span><strong>Le voyage parfait</strong><small>Commence par vos envies</small></span></div>
+        <div class="floating-note"><span class="note-icon">✧</span><span><strong>Votre prochaine aventure</strong><small>À découvrir ensemble</small></span></div>
+        <div class="hero-stamp">GO<br><span>EXPLORE</span></div>
+      </div>
+    </section>
+
+    <section class="trust-strip">
+      <div><strong>01</strong><span>Vous nous racontez<br>vos envies</span></div>
+      <div><strong>02</strong><span>L'IA explore<br>les possibilités</span></div>
+      <div><strong>03</strong><span>Vous découvrez<br>votre voyage idéal</span></div>
+      <div class="trust-note">Moins de recherches.<br><b>Plus de découvertes.</b></div>
+    </section>
+
+    <section class="planner-section" id="planner">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow">VOTRE AVENTURE COMMENCE ICI</div>
+          <h2>Imaginons votre prochain voyage<span>.</span></h2>
+          <p>Quelques informations suffisent pour trouver l'inspiration.</p>
+        </div>
+        <div class="step-indicator"><span>01</span> / 01 <small>Votre profil voyageur</small></div>
+      </div>
+
+      <div class="planner-layout">
+        <form class="planner-card" (ngSubmit)="generateRecommendations()">
+          <div class="form-section">
+            <div class="form-title"><span class="number">01</span><div><h3>Votre point de départ</h3><p>D'où partez-vous et avec quel passeport ?</p></div></div>
+            <div class="form-grid two">
+              <label class="field"><span>Ville de départ</span><div class="input-wrap"><span class="field-icon">⌖</span><input name="departureCity" [(ngModel)]="departureCity" placeholder="Ex. Dakar, Sénégal"></div></label>
+              <label class="field"><span>Nationalité / passeport</span><div class="input-wrap"><span class="field-icon">◎</span><select name="nationality" [(ngModel)]="nationality"><option>Sénégalaise</option><option>Centrafricaine</option><option>Ivoirienne</option><option>Camerounaise</option><option>Congolaise</option><option>Française</option><option>Autre</option></select></div></label>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-section">
+            <div class="form-title"><span class="number">02</span><div><h3>Qui part à l'aventure ?</h3><p>Nous adapterons les suggestions à votre groupe.</p></div></div>
+            <div class="form-grid three">
+              <label class="field"><span>Adultes</span><div class="input-wrap"><span class="field-icon">♙</span><input type="number" min="1" max="20" name="adults" [(ngModel)]="adults"></div></label>
+              <label class="field"><span>Enfants</span><div class="input-wrap"><span class="field-icon">♧</span><input type="number" min="0" max="20" name="children" [(ngModel)]="children"></div></label>
+              <label class="field"><span>Type de voyage</span><div class="input-wrap"><span class="field-icon">♡</span><select name="travelStyle" [(ngModel)]="travelStyle"><option>En couple</option><option>En famille</option><option>En solo</option><option>Entre amis</option><option>Professionnel</option></select></div></label>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-section">
+            <div class="form-title"><span class="number">03</span><div><h3>Votre budget & votre temps</h3><p>Un voyage mémorable, sans mauvaise surprise.</p></div></div>
+            <div class="form-grid two">
+              <label class="field"><span>Budget total estimé</span><div class="input-wrap"><span class="field-icon">₣</span><input type="number" min="0" step="50000" name="budget" [(ngModel)]="budget"><b class="input-suffix">FCFA</b></div></label>
+              <label class="field"><span>Durée du séjour</span><div class="input-wrap"><span class="field-icon">▦</span><input type="number" min="1" max="90" name="duration" [(ngModel)]="duration"><b class="input-suffix">jours</b></div></label>
+            </div>
+            <label class="field period-field"><span>Quand souhaitez-vous partir ?</span><div class="input-wrap"><span class="field-icon">▣</span><select name="travelPeriod" [(ngModel)]="travelPeriod"><option>Dates flexibles</option><option>Janvier – Mars</option><option>Avril – Juin</option><option>Juillet – Septembre</option><option>Octobre – Décembre</option></select></div></label>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-section">
+            <div class="form-title"><span class="number">04</span><div><h3>Qu'est-ce qui vous fait vibrer ?</h3><p>Choisissez autant d'expériences que vous le souhaitez.</p></div></div>
+            <div class="interest-list">
+              <button type="button" *ngFor="let interest of interests" class="interest-chip" [class.selected]="selectedInterests.includes(interest)" (click)="toggleInterest(interest)">
+                <span>{{ selectedInterests.includes(interest) ? '✓' : '+' }}</span>{{ interest }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-section">
+            <div class="form-title"><span class="number">05</span><div><h3>Une destination en tête ?</h3><p>Ou laissez-nous vous surprendre.</p></div></div>
+            <div class="scope-options">
+              <label class="radio-card" [class.chosen]="destinationScope === 'Afrique et monde'"><input type="radio" name="scope" value="Afrique et monde" [(ngModel)]="destinationScope"><span class="radio-dot"></span><span><b>Surprenez-moi</b><small>Afrique & monde</small></span><span class="option-emoji">✧</span></label>
+              <label class="radio-card" [class.chosen]="destinationScope === 'Afrique uniquement'"><input type="radio" name="scope" value="Afrique uniquement" [(ngModel)]="destinationScope"><span class="radio-dot"></span><span><b>Afrique uniquement</b><small>Découvrir le continent</small></span><span class="option-emoji">🌍</span></label>
+              <label class="radio-card" [class.chosen]="destinationScope === 'J’ai une idée précise'"><input type="radio" name="scope" value="J’ai une idée précise" [(ngModel)]="destinationScope"><span class="radio-dot"></span><span><b>J'ai une idée précise</b><small>Une destination en tête</small></span><span class="option-emoji">⌖</span></label>
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <p><span>✦</span> Vos informations servent uniquement à personnaliser votre expérience.</p>
+            <p class="disclaimer" *ngIf="errorMessage()" role="alert">{{ errorMessage() }}</p>
+            <button class="primary-button generate-button" type="submit" [disabled]="isGenerating()">
+              <span *ngIf="!isGenerating()">Trouver mon voyage idéal <b>↗</b></span>
+              <span *ngIf="isGenerating()">Exploration en cours… <b class="spinner"></b></span>
+            </button>
+          </div>
+        </form>
+
+        <aside class="planner-aside">
+          <div class="aside-card inspiration-card">
+            <div class="aside-image"></div>
+            <div class="aside-content"><span class="eyebrow">L'INSPIRATION DU MOMENT</span><h3>Et si vous partiez à la découverte de l'inattendu ?</h3><p>Des plages secrètes aux villes pleines de vie, le monde vous réserve encore tant de merveilles.</p></div>
+          </div>
+          <div class="aside-card promise-card">
+            <span class="promise-icon">✳</span><h3>Un voyage qui vous ressemble.</h3><p>Pas de recommandations génériques. Chaque suggestion prend en compte votre budget, votre groupe et vos envies.</p>
+            <div class="promise-signature">L'équipe voyagea</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="recommendations-section" id="recommendations" *ngIf="showResults()">
+      <div class="section-heading results-heading">
+        <div><div class="eyebrow">VOTRE SÉLECTION PERSONNALISÉE</div><h2>Voici où vos envies vous emmènent<span>.</span></h2><p>Résultats calculés à partir du catalogue de destinations disponible.</p></div>
+        <button class="text-button" (click)="startOver()">Modifier mes critères ↗</button>
+      </div>
+      <div class="result-summary"><span class="summary-sparkle">✦</span><span><b>{{ adults }} adulte(s), {{ children }} enfant(s) · {{ duration }} jours</b><small>Départ : {{ departureCity }} · Budget : {{ budget | number:'1.0-0' }} FCFA</small></span><span class="summary-pill">Voyage {{ createdTripId() }}</span></div>
+      <div class="destination-grid">
+        <article class="destination-card" *ngFor="let destination of recommendations">
+          <div class="destination-image" [style.background-image]="'url(' + destinationImage(destination.city) + ')'">
+            <span class="match-badge">✦ {{ destination.score }}% de compatibilité</span>
+            <button class="favorite-button" aria-label="Ajouter aux favoris">♡</button>
+          </div>
+          <div class="destination-body">
+            <div class="destination-country">{{ destination.country }}</div>
+            <h3>{{ destination.city }}</h3>
+            <p>{{ destination.explanation }}</p>
+            <div class="tag-list"><span *ngFor="let tag of destination.matchedInterests">{{ tag }}</span></div>
+            <div class="destination-meta"><span>{{ destination.budgetStatus === 'WITHIN_BUDGET' ? 'Dans le budget estimé' : 'Dépasse le budget estimé' }}</span><b>{{ destination.estimatedTripBudget | number:'1.0-0' }} {{ destination.currency }}</b></div>
+            <button class="outline-button" type="button">Découvrir cette destination <span>↗</span></button>
+          </div>
+        </article>
+      </div>
+      <p class="disclaimer">Estimations indicatives issues du catalogue de démonstration. Elles ne constituent pas des prix vérifiés et peuvent exclure le transport international, les formalités et certains frais de séjour.</p>
+    </section>
+
+    <section class="how-section" id="comment-ca-marche">
+      <div class="eyebrow">SIMPLE COMME BONJOUR</div>
+      <h2>De l'envie au départ, <em>en quelques étapes.</em></h2>
+      <div class="how-grid">
+        <div><span class="how-number">01</span><div class="how-icon">☼</div><h3>Racontez-nous</h3><p>Partagez vos envies, votre budget et les personnes qui vous accompagnent.</p></div>
+        <div><span class="how-number">02</span><div class="how-icon">✧</div><h3>Laissez-vous guider</h3><p>Notre assistant explore les destinations et imagine des expériences adaptées.</p></div>
+        <div><span class="how-number">03</span><div class="how-icon">↗</div><h3>Partez serein</h3><p>Découvrez votre itinéraire et ajustez chaque détail à votre rythme.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a class="brand footer-brand" href="#"><span class="brand-mark"><span></span><span></span><span></span></span><span>voyagea<span class="brand-dot">.</span></span></a>
+    <span>Le monde à votre façon.</span>
+    <span>© 2026 voyagea. Une démo de produit.</span>
+  </footer>
+</div>
