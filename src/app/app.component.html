@@ -372,7 +372,7 @@
           </article>
           <ng-template #chooseAdminItem><div class="admin-detail admin-empty">Sélectionnez une fiche dans la liste pour examiner ses preuves et ses champs.</div></ng-template>
         </div>
-        <button class="text-button" type="button" (click)="adminCatalog.set(null); adminSelectedItem.set(null); adminCredentials.set('')">Se déconnecter</button>
+        <button class="text-button" type="button" (click)="adminCatalog.set(null); adminSelectedItem.set(null); adminCredentials.set(''); adminUsername = ''; adminPassword = ''">Se déconnecter</button>
       </ng-container>
     </section>
 
