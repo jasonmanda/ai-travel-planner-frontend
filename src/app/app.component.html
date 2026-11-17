@@ -9,6 +9,7 @@
       <button [class.active]="activeTab() === 'Découvrir'" (click)="selectTab('Découvrir')">Découvrir</button>
       <button [class.active]="activeTab() === 'Mon voyage'" (click)="selectTab('Mon voyage')">Mon voyage</button>
       <a href="#comment-ca-marche">Comment ça marche</a>
+      <button type="button" (click)="openAdmin()">Administration</button>
     </nav>
 
     <div class="header-actions">
@@ -20,6 +21,7 @@
       <button (click)="selectTab('Découvrir')">Découvrir</button>
       <button (click)="selectTab('Mon voyage')">Mon voyage</button>
       <a href="#comment-ca-marche">Comment ça marche</a>
+      <button type="button" (click)="openAdmin()">Administration</button>
     </nav>
   </header>
 
@@ -274,6 +276,104 @@
       </section>
       <p class="disclaimer" *ngIf="catalogError()" role="alert">{{ catalogError() }}</p>
       <p class="disclaimer">Les scores sont calculés par le moteur métier à partir du catalogue disponible. Les budgets sont des estimations indicatives, non des prix vérifiés. Les critères signalés comme non évalués ne sont pas pris en compte dans le classement.</p>
+    </section>
+
+    <section class="catalog-admin-section" id="catalog-admin" *ngIf="adminMode()">
+      <div class="section-heading results-heading">
+        <div>
+          <div class="eyebrow">ESPACE ADMINISTRATEUR</div>
+          <h2>Vérification du catalogue<span>.</span></h2>
+          <p>Contrôlez les preuves et les valeurs réelles avant d'enregistrer chaque champ vérifié.</p>
+        </div>
+        <button class="text-button" type="button" (click)="adminMode.set(false)">Fermer ×</button>
+      </div>
+
+      <div class="admin-login-card" *ngIf="!adminCatalog()">
+        <h3>Connexion sécurisée</h3>
+        <p>Les identifiants sont ceux configurés côté backend. Ils ne sont pas enregistrés dans le navigateur.</p>
+        <div class="admin-login-fields">
+          <label class="field"><span>Identifiant administrateur</span><input name="adminUsername" [(ngModel)]="adminUsername" autocomplete="username"></label>
+          <label class="field"><span>Mot de passe</span><input type="password" name="adminPassword" [(ngModel)]="adminPassword" autocomplete="current-password"></label>
+          <button class="primary-button" type="button" (click)="loadAdminCatalog()" [disabled]="adminLoading()">{{ adminLoading() ? 'Connexion…' : 'Ouvrir le catalogue' }}</button>
+        </div>
+      </div>
+
+      <p class="disclaimer" *ngIf="adminError()" role="alert">{{ adminError() }}</p>
+      <p class="admin-success" *ngIf="adminSuccess()" role="status">{{ adminSuccess() }}</p>
+
+      <ng-container *ngIf="adminCatalog() as admin">
+        <div class="admin-metrics">
+          <div><strong>{{ admin.total }}</strong><span>Fiches actives</span></div>
+          <div><strong>{{ admin.fullyVerifiedCount }}</strong><span>Champs essentiels complets</span></div>
+          <div><strong>{{ admin.partiallyVerifiedCount }}</strong><span>Partiellement vérifiées</span></div>
+          <div><strong>{{ admin.unverifiedCount }}</strong><span>Sans champ vérifié</span></div>
+        </div>
+        <p class="admin-policy">{{ admin.policy }}</p>
+        <div class="admin-workspace">
+          <aside class="admin-queue">
+            <div class="admin-filters">
+              <input name="adminSearch" [(ngModel)]="adminSearch" placeholder="Rechercher une fiche, ville, pays…">
+              <select name="adminTypeFilter" [(ngModel)]="adminTypeFilter">
+                <option value="ALL">Tous les types</option>
+                <option value="ACTIVITY">Activités</option>
+                <option value="ATTRACTION">Attractions</option>
+              </select>
+              <select name="adminStatusFilter" [(ngModel)]="adminStatusFilter">
+                <option value="ALL">Tous les statuts</option>
+                <option value="UNVERIFIED">Non vérifiées</option>
+                <option value="PARTIAL">Partiellement vérifiées</option>
+                <option value="VERIFIED">Six champs vérifiés</option>
+              </select>
+            </div>
+            <div class="admin-queue-list">
+              <button class="admin-queue-item" type="button" *ngFor="let item of filteredAdminItems"
+                [class.selected]="adminSelectedItem()?.id === item.id && adminSelectedItem()?.itemType === item.itemType"
+                (click)="selectAdminItem(item)">
+                <span class="admin-item-type">{{ item.itemType === 'ACTIVITY' ? 'ACTIVITÉ' : 'ATTRACTION' }} · {{ item.countryCode }}</span>
+                <strong>{{ item.name }}</strong>
+                <small>{{ item.city }}, {{ item.country }}</small>
+                <span class="admin-item-progress">{{ item.verifiedCoreFields.length }}/6 champs vérifiés · {{ item.dataStatus }}</span>
+              </button>
+              <p *ngIf="!filteredAdminItems.length">Aucune fiche ne correspond aux filtres.</p>
+            </div>
+          </aside>
+
+          <article class="admin-detail" *ngIf="adminSelectedItem() as item; else chooseAdminItem">
+            <div class="admin-detail-heading">
+              <div><span class="admin-item-type">{{ item.itemType }} · {{ item.countryCode }}</span><h3>{{ item.name }}</h3><p>{{ item.city }}, {{ item.country }}</p></div>
+              <span class="admin-status-pill">{{ item.dataStatus }} · {{ item.verifiedCoreFields.length }}/6</span>
+            </div>
+            <div class="admin-source-context">
+              <b>Source actuellement enregistrée</b>
+              <p>{{ item.sourceName || 'Nom de source absent' }} · {{ item.sourceType || 'Type inconnu' }} · {{ item.sourceScope || 'Portée inconnue' }}</p>
+              <a *ngIf="item.sourceUrl" [href]="item.sourceUrl" target="_blank" rel="noopener noreferrer">Ouvrir la source actuelle ↗</a>
+              <p *ngIf="item.verificationNotes">{{ item.verificationNotes }}</p>
+            </div>
+            <h4>Valeurs à contrôler</h4>
+            <div class="admin-field-list">
+              <label class="admin-field-row" *ngFor="let field of adminCoreFields">
+                <input type="checkbox" [checked]="adminFieldSelection[field.key]" [disabled]="item.verifiedCoreFields.includes(field.key)"
+                  (change)="toggleAdminField(field.key, $any($event.target).checked)">
+                <span><b>{{ field.label }}</b><small>{{ adminFieldValue(field, item) }}</small></span>
+                <em *ngIf="item.verifiedCoreFields.includes(field.key)">Vérifié</em>
+                <em *ngIf="!item.verifiedCoreFields.includes(field.key)">À contrôler</em>
+              </label>
+            </div>
+            <div class="admin-verification-form">
+              <h4>Preuve réellement consultée</h4>
+              <label class="field"><span>Nom de la source</span><input name="adminSourceName" [(ngModel)]="adminSourceName"></label>
+              <label class="field"><span>URL directe de la source</span><input name="adminSourceUrl" type="url" [(ngModel)]="adminSourceUrl"></label>
+              <label class="field"><span>Notes : quels éléments avez-vous comparés ?</span><textarea name="adminVerificationNotes" rows="4" [(ngModel)]="adminVerificationNotes" placeholder="Décrivez les informations effectivement confirmées par cette source."></textarea></label>
+              <p class="disclaimer">L'enregistrement photographie les valeurs actuelles de la base. Ne cochez un champ que si la source consultée confirme précisément sa valeur. Une source opérateur ne devient pas une source institutionnelle par cette action.</p>
+              <button class="primary-button" type="button" (click)="submitCatalogVerification()" [disabled]="adminSaving()">
+                {{ adminSaving() ? 'Enregistrement…' : 'Enregistrer les champs contrôlés' }}
+              </button>
+            </div>
+          </article>
+          <ng-template #chooseAdminItem><div class="admin-detail admin-empty">Sélectionnez une fiche dans la liste pour examiner ses preuves et ses champs.</div></ng-template>
+        </div>
+        <button class="text-button" type="button" (click)="adminCatalog.set(null); adminSelectedItem.set(null); adminCredentials.set(''); adminUsername = ''; adminPassword = ''">Se déconnecter</button>
+      </ng-container>
     </section>
 
     <section class="how-section" id="comment-ca-marche">

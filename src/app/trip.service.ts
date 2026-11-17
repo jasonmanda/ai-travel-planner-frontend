@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 
@@ -141,6 +141,55 @@ export interface ItineraryResponse {
   };
 }
 
+export interface AdminCatalogItem {
+  itemType: 'ACTIVITY' | 'ATTRACTION';
+  id: number;
+  countryCode: string;
+  country: string;
+  city: string;
+  name: string;
+  category: string;
+  description: string;
+  latitude: number | null;
+  longitude: number | null;
+  estimatedDurationMinutes: number | null;
+  estimatedCost: number | null;
+  currency: string | null;
+  dataStatus: string;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  sourceType: string | null;
+  sourceScope: string | null;
+  verificationNotes: string | null;
+  verifiedCoreFields: string[];
+  latestEventId: number | null;
+  latestEventStatus: string | null;
+  latestEventSourceName: string | null;
+  latestEventSourceUrl: string | null;
+  latestEventNotes: string | null;
+  latestVerifiedBy: string | null;
+  latestVerifiedAt: string | null;
+  verificationEventCount: number;
+}
+
+export interface AdminCatalogResponse {
+  items: AdminCatalogItem[];
+  total: number;
+  fullyVerifiedCount: number;
+  partiallyVerifiedCount: number;
+  unverifiedCount: number;
+  requiredCoreFields: string[];
+  policy: string;
+}
+
+export interface CatalogVerificationPayload {
+  verificationStatus: 'VERIFIED' | 'PARTIALLY_VERIFIED';
+  verifiedFields: string[];
+  sourceName: string;
+  sourceUrl: string;
+  verificationNotes: string;
+}
+
 export interface AiItineraryGuideResponse {
   overview: string;
   dayGuidance: { dayNumber: number; focus: string; rationale: string }[];
@@ -152,6 +201,32 @@ export interface AiItineraryGuideResponse {
 export class TripService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
+
+  private adminHeaders(credentials: string): HttpHeaders {
+    return new HttpHeaders({ Authorization: 'Basic ' + btoa(credentials) });
+  }
+
+  /** GET /api/v1/admin/catalog/items : queue de vérification, protégée par HTTP Basic. */
+  getAdminCatalog(credentials: string): Promise<AdminCatalogResponse> {
+    return firstValueFrom(this.http.get<AdminCatalogResponse>(
+      `${this.apiUrl}/admin/catalog/items`,
+      { headers: this.adminHeaders(credentials) }
+    ));
+  }
+
+  /** POST /api/v1/admin/catalog/{type}/{id}/verifications : snapshot des valeurs courantes. */
+  verifyCatalogItem(
+    item: AdminCatalogItem,
+    payload: CatalogVerificationPayload,
+    credentials: string
+  ): Promise<Record<string, unknown>> {
+    const type = item.itemType === 'ATTRACTION' ? 'attractions' : 'activities';
+    return firstValueFrom(this.http.post<Record<string, unknown>>(
+      `${this.apiUrl}/admin/catalog/${type}/${item.id}/verifications`,
+      payload,
+      { headers: this.adminHeaders(credentials) }
+    ));
+  }
 
   /** GET /api/v1/destinations */
   getDestinations(): Promise<Destination[]> {
