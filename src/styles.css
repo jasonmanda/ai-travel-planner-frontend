@@ -1225,3 +1225,166 @@ a {
     padding: 16px;
   }
 }
+
+
+/* Generated itinerary and optional AI guide */
+.itinerary-button {
+  width: 100%;
+  margin-top: 9px;
+  padding: 12px 14px;
+  font-size: 10px;
+  gap: 12px;
+}
+.itinerary-panel {
+  margin: 38px 0 0;
+  padding: 30px;
+  background: #fff;
+  border: 1px solid #e5ebe2;
+  border-radius: 8px;
+  box-shadow: 0 12px 35px rgba(37, 61, 44, 0.04);
+}
+.itinerary-panel .section-heading {
+  align-items: center;
+}
+.guide-button {
+  white-space: nowrap;
+}
+.itinerary-policy {
+  padding: 16px 18px;
+  background: #f4f7f1;
+  border-left: 3px solid #8eaa82;
+  color: #637466;
+  font-size: 10px;
+  line-height: 1.7;
+}
+.itinerary-policy p {
+  margin: 6px 0;
+}
+.itinerary-policy small {
+  color: #829083;
+}
+.itinerary-warning {
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: #faf7ed;
+  border: 1px solid #f0e8d3;
+  color: #796b48;
+  font-size: 10px;
+}
+.itinerary-days {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+.itinerary-day {
+  padding: 18px;
+  border: 1px solid #edf0eb;
+  border-radius: 6px;
+  background: #fff;
+}
+.day-heading > span {
+  color: #829b75;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.day-heading h3 {
+  margin: 5px 0 8px;
+  color: #304638;
+  font: 500 20px var(--serif);
+}
+.day-summary,
+.empty-day {
+  color: #879187;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.itinerary-item {
+  border-top: 1px solid #edf0eb;
+  padding: 13px 0 5px;
+  margin-top: 10px;
+}
+.item-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.item-topline b {
+  color: #405548;
+  font-size: 11px;
+}
+.item-topline span,
+.item-meta span {
+  color: #879187;
+  font-size: 9px;
+}
+.itinerary-item p {
+  color: #78857b;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin: 8px 0;
+}
+.itinerary-item a {
+  color: #63845b;
+  font-size: 9px;
+}
+.ai-guide-card {
+  margin-top: 22px;
+  padding: 22px;
+  border: 1px solid #dfe9d9;
+  border-radius: 7px;
+  background: #f8faf6;
+}
+.ai-guide-card h3 {
+  margin: 8px 0 12px;
+  color: #304638;
+  font: 500 24px var(--serif);
+}
+.guide-overview {
+  color: #637466;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.guide-day {
+  padding: 12px 0;
+  border-top: 1px solid #e8eee4;
+}
+.guide-day b,
+.guide-reminders b {
+  color: #49664c;
+  font-size: 10px;
+}
+.guide-day p,
+.guide-reminders li {
+  color: #778478;
+  font-size: 10px;
+  line-height: 1.7;
+}
+.guide-reminders {
+  padding-top: 12px;
+  border-top: 1px solid #e8eee4;
+}
+.guide-reminders ul {
+  padding-left: 18px;
+}
+@media (max-width: 760px) {
+  .itinerary-panel {
+    padding: 18px;
+  }
+  .itinerary-panel .section-heading {
+    display: block;
+  }
+  .guide-button {
+    width: 100%;
+    margin-top: 15px;
+  }
+  .itinerary-days {
+    grid-template-columns: 1fr;
+  }
+}
