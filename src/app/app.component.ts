@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { TripService, Recommendation, DestinationCatalog, ItineraryResponse, AiItineraryGuideResponse } from './trip.service';
+import { TripService, Recommendation, DestinationCatalog, ItineraryResponse, AiItineraryGuideResponse, AdminCatalogItem, AdminCatalogResponse } from './trip.service';
 
 @Component({
   selector: 'app-root',
@@ -12,6 +12,31 @@ import { TripService, Recommendation, DestinationCatalog, ItineraryResponse, AiI
 })
 export class AppComponent {
   private readonly tripService = inject(TripService);
+  adminMode = signal(false);
+  adminUsername = '';
+  adminPassword = '';
+  adminCredentials = signal('');
+  adminCatalog = signal<AdminCatalogResponse | null>(null);
+  adminSelectedItem = signal<AdminCatalogItem | null>(null);
+  adminLoading = signal(false);
+  adminSaving = signal(false);
+  adminError = signal('');
+  adminSuccess = signal('');
+  adminSearch = '';
+  adminTypeFilter = 'ALL';
+  adminStatusFilter = 'ALL';
+  adminSourceName = '';
+  adminSourceUrl = '';
+  adminVerificationNotes = '';
+  adminFieldSelection: Record<string, boolean> = {};
+  readonly adminCoreFields = [
+    { key: 'name', label: 'Nom', value: (item: AdminCatalogItem) => item.name },
+    { key: 'category', label: 'Catégorie', value: (item: AdminCatalogItem) => item.category },
+    { key: 'description', label: 'Description', value: (item: AdminCatalogItem) => item.description },
+    { key: 'latitude', label: 'Latitude', value: (item: AdminCatalogItem) => item.latitude },
+    { key: 'longitude', label: 'Longitude', value: (item: AdminCatalogItem) => item.longitude },
+    { key: 'estimated_duration_minutes', label: 'Durée (minutes)', value: (item: AdminCatalogItem) => item.estimatedDurationMinutes }
+  ];
   recommendations: Recommendation[] = [];
   selectedCatalog = signal<DestinationCatalog | null>(null);
   catalogLoading = signal(false);
@@ -58,6 +83,109 @@ export class AppComponent {
   ];
 
 
+
+  openAdmin(): void {
+    this.adminMode.set(true);
+    this.activeTab.set('Administration');
+    this.adminError.set('');
+    setTimeout(() => document.getElementById('catalog-admin')?.scrollIntoView({ behavior: 'smooth' }), 0);
+  }
+
+  async loadAdminCatalog(): Promise<void> {
+    if (!this.adminUsername.trim() || !this.adminPassword) {
+      this.adminError.set('Renseignez les identifiants administrateur configurés sur le backend.');
+      return;
+    }
+    this.adminLoading.set(true);
+    this.adminError.set('');
+    this.adminSuccess.set('');
+    const credentials = this.adminUsername.trim() + ':' + this.adminPassword;
+    try {
+      const catalog = await this.tripService.getAdminCatalog(credentials);
+      this.adminCredentials.set(credentials);
+      this.adminCatalog.set(catalog);
+      this.adminSelectedItem.set(null);
+    } catch (error: any) {
+      this.adminError.set(error?.status === 401 || error?.status === 403
+        ? 'Accès refusé. Vérifiez les identifiants administrateur.'
+        : error?.error?.detail || error?.error?.message || 'Impossible de charger le catalogue administrateur.');
+    } finally {
+      this.adminLoading.set(false);
+    }
+  }
+
+  get filteredAdminItems(): AdminCatalogItem[] {
+    const items = this.adminCatalog()?.items ?? [];
+    const query = this.adminSearch.trim().toLocaleLowerCase();
+    return items.filter(item => {
+      const matchesQuery = !query || [item.name, item.city, item.country, item.category]
+        .some(value => (value ?? '').toLocaleLowerCase().includes(query));
+      const matchesType = this.adminTypeFilter === 'ALL' || item.itemType === this.adminTypeFilter;
+      const count = item.verifiedCoreFields?.length ?? 0;
+      const status = count === 6 ? 'VERIFIED' : count > 0 ? 'PARTIAL' : 'UNVERIFIED';
+      const matchesStatus = this.adminStatusFilter === 'ALL' || status === this.adminStatusFilter;
+      return matchesQuery && matchesType && matchesStatus;
+    });
+  }
+
+  selectAdminItem(item: AdminCatalogItem): void {
+    this.adminSelectedItem.set(item);
+    this.adminError.set('');
+    this.adminSuccess.set('');
+    this.adminSourceName = item.sourceName || item.latestEventSourceName || '';
+    this.adminSourceUrl = item.sourceUrl || item.latestEventSourceUrl || '';
+    this.adminVerificationNotes = '';
+    this.adminFieldSelection = Object.fromEntries(
+      this.adminCoreFields.map(field => [field.key, false])
+    );
+  }
+
+  toggleAdminField(field: string, checked: boolean): void {
+    this.adminFieldSelection = { ...this.adminFieldSelection, [field]: checked };
+  }
+
+  async submitCatalogVerification(): Promise<void> {
+    const item = this.adminSelectedItem();
+    const verifiedFields = Object.entries(this.adminFieldSelection)
+      .filter(([, checked]) => checked).map(([field]) => field);
+    if (!item || !verifiedFields.length) {
+      this.adminError.set('Sélectionnez au moins un champ que vous avez réellement contrôlé.');
+      return;
+    }
+    if (!this.adminSourceName.trim() || !this.adminSourceUrl.trim() || !this.adminVerificationNotes.trim()) {
+      this.adminError.set('La source, son URL et les notes de vérification sont obligatoires.');
+      return;
+    }
+    const merged = new Set([...(item.verifiedCoreFields ?? []), ...verifiedFields]);
+    const verificationStatus = merged.size === 6 ? 'VERIFIED' : 'PARTIALLY_VERIFIED';
+    this.adminSaving.set(true);
+    this.adminError.set('');
+    this.adminSuccess.set('');
+    try {
+      await this.tripService.verifyCatalogItem(item, {
+        verificationStatus,
+        verifiedFields,
+        sourceName: this.adminSourceName.trim(),
+        sourceUrl: this.adminSourceUrl.trim(),
+        verificationNotes: this.adminVerificationNotes.trim()
+      }, this.adminCredentials());
+      await this.loadAdminCatalog();
+      this.adminSuccess.set('Vérification enregistrée. Le statut est recalculé à partir des valeurs et de l’historique.');
+      const refreshed = this.adminCatalog()?.items.find(candidate =>
+        candidate.itemType === item.itemType && candidate.id === item.id
+      );
+      if (refreshed) this.selectAdminItem(refreshed);
+    } catch (error: any) {
+      this.adminError.set(error?.error?.detail || error?.error?.message || 'Échec de l’enregistrement de la vérification.');
+    } finally {
+      this.adminSaving.set(false);
+    }
+  }
+
+  adminFieldValue(field: { key: string; label: string; value: (item: AdminCatalogItem) => unknown }, item: AdminCatalogItem): string {
+    const value = field.value(item);
+    return value == null || value === '' ? 'Valeur absente' : String(value);
+  }
 
   toggleInterest(interest: string): void {
     this.selectedInterests = this.selectedInterests.includes(interest)
