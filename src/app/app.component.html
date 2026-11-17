@@ -180,12 +180,73 @@
               <ul><li *ngFor="let criterion of notEvaluatedLabelsFor(destination)">{{ criterion }}</li></ul>
             </div>
             <button class="outline-button" type="button" (click)="openDestinationCatalog(destination)" [disabled]="catalogLoading()">{{ catalogLoading() ? 'Chargement…' : 'Explorer cette destination' }} <span>↗</span></button>
+            <button class="primary-button itinerary-button" type="button" (click)="generateItinerary(destination)" [disabled]="itineraryLoading()">
+              {{ itineraryLoading() ? 'Construction…' : 'Construire mon itinéraire' }} <span>✦</span>
+            </button>
           </div>
         </article>
       </div>
       <ng-template #noRecommendations>
         <div class="empty-recommendations">Aucune destination ne correspond aux données disponibles pour le moment. Essayez d'élargir vos intérêts ou votre budget.</div>
       </ng-template>
+      <p class="disclaimer" *ngIf="itineraryError()" role="alert">{{ itineraryError() }}</p>
+      <section class="itinerary-panel" id="generated-itinerary" *ngIf="itinerary() as plan">
+        <div class="section-heading results-heading">
+          <div>
+            <div class="eyebrow">VOTRE PROGRAMME DE VOYAGE</div>
+            <h2>{{ plan.title }}<span>.</span></h2>
+            <p>{{ plan.city }}, {{ plan.country }} · {{ plan.days.length }} jour(s)</p>
+          </div>
+          <button class="primary-button guide-button" type="button" (click)="generateAiGuide()" [disabled]="aiGuideLoading()">
+            {{ aiGuideLoading() ? 'Préparation du guide…' : 'Obtenir le guide IA' }} <span>✦</span>
+          </button>
+        </div>
+        <div class="itinerary-policy">
+          <b>Règle de planification</b>
+          <p>{{ plan.planningPolicy }}</p>
+          <small *ngIf="plan.recommendationEligibility">
+            {{ plan.recommendationEligibility.eligibleCount }} activité(s) éligible(s) sur {{ plan.recommendationEligibility.candidateCount }} fiche(s) candidates.
+          </small>
+        </div>
+        <p class="itinerary-warning" *ngFor="let warning of plan.planningWarnings">{{ warning }}</p>
+        <div class="itinerary-days">
+          <article class="itinerary-day" *ngFor="let day of plan.days">
+            <div class="day-heading"><span>JOUR {{ day.dayNumber }}</span><h3>{{ day.title }}</h3></div>
+            <p class="day-summary">{{ day.summary }}</p>
+            <div class="itinerary-item" *ngFor="let item of day.items">
+              <div class="item-topline">
+                <b>{{ item.title }}</b>
+                <span>{{ item.type === 'ATTRACTION' ? 'Attraction' : 'Activité' }}</span>
+              </div>
+              <p *ngIf="item.description">{{ item.description }}</p>
+              <div class="item-meta">
+                <span>{{ dataStatusLabel(item.dataStatus) }}</span>
+                <span *ngIf="item.estimatedDurationMinutes != null">{{ formatDuration(item.estimatedDurationMinutes) }}</span>
+                <span *ngIf="item.estimatedCost != null">Estimation : {{ item.estimatedCost | number:'1.0-0' }} {{ item.currency || '' }}</span>
+                <span *ngIf="item.priceVerificationStatus">Tarif : {{ item.priceVerificationStatus === 'VERIFIED' ? 'vérifié' : item.priceVerificationStatus === 'ESTIMATED' ? 'estimatif' : 'non disponible' }}</span>
+              </div>
+              <a *ngIf="item.sourceUrl" [href]="item.sourceUrl" target="_blank" rel="noopener noreferrer">Consulter la source</a>
+            </div>
+            <p class="empty-day" *ngIf="!day.items.length">Aucune activité ne satisfait actuellement les critères stricts du catalogue pour cette journée.</p>
+          </article>
+        </div>
+        <p class="disclaimer">{{ plan.estimateDisclaimer }}</p>
+        <p class="disclaimer" *ngIf="aiGuideError()" role="alert">{{ aiGuideError() }}</p>
+        <section class="ai-guide-card" *ngIf="aiGuide() as guide">
+          <div class="eyebrow">VOTRE ASSISTANT DE VOYAGE</div>
+          <h3>Le regard de votre guide IA</h3>
+          <p class="guide-overview">{{ guide.overview }}</p>
+          <div class="guide-day" *ngFor="let advice of guide.dayGuidance">
+            <b>Jour {{ advice.dayNumber }} · {{ advice.focus }}</b>
+            <p>{{ advice.rationale }}</p>
+          </div>
+          <div class="guide-reminders" *ngIf="guide.reminders.length">
+            <b>À vérifier avant le départ</b>
+            <ul><li *ngFor="let reminder of guide.reminders">{{ reminder }}</li></ul>
+          </div>
+          <p class="disclaimer">{{ guide.disclaimer }}</p>
+        </section>
+      </section>
       <section class="catalog-panel" id="destination-catalog" *ngIf="selectedCatalog() as catalog">
         <div class="section-heading results-heading">
           <div><div class="eyebrow">GUIDE DE DESTINATION</div><h2>{{ catalog.destination['city'] }}<span>.</span></h2><p>{{ catalog.destination['country'] }} · Informations issues du catalogue.</p></div>

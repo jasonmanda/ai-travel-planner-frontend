@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { TripService, Recommendation, DestinationCatalog } from './trip.service';
+import { TripService, Recommendation, DestinationCatalog, ItineraryResponse, AiItineraryGuideResponse } from './trip.service';
 
 @Component({
   selector: 'app-root',
@@ -34,6 +34,12 @@ export class AppComponent {
   showResults = signal(false);
   isGenerating = signal(false);
   mobileMenuOpen = signal(false);
+  itinerary = signal<ItineraryResponse | null>(null);
+  itineraryLoading = signal(false);
+  itineraryError = signal('');
+  aiGuide = signal<AiItineraryGuideResponse | null>(null);
+  aiGuideLoading = signal(false);
+  aiGuideError = signal('');
 
   departureCity = 'Dakar, Sénégal';
   nationality = 'Sénégalaise';
@@ -61,6 +67,11 @@ export class AppComponent {
 
   async generateRecommendations(): Promise<void> {
     this.errorMessage.set('');
+    this.itinerary.set(null);
+    this.itineraryError.set('');
+    this.aiGuide.set(null);
+    this.aiGuideError.set('');
+    this.selectedCatalog.set(null);
     if (!this.departureCity.trim() || !this.nationality.trim() || this.budget <= 0 || this.duration < 1) {
       this.errorMessage.set('Veuillez vérifier votre ville de départ, votre nationalité, votre budget et la durée du séjour.');
       return;
@@ -109,6 +120,43 @@ export class AppComponent {
   }
 
   closeDestinationCatalog(): void { this.selectedCatalog.set(null); }
+
+  async generateItinerary(destination: Recommendation): Promise<void> {
+    const tripId = this.createdTripId();
+    if (!tripId) {
+      this.itineraryError.set('Créez d’abord un voyage avant de générer un itinéraire.');
+      return;
+    }
+    this.itineraryLoading.set(true);
+    this.itineraryError.set('');
+    this.itinerary.set(null);
+    this.aiGuide.set(null);
+    this.aiGuideError.set('');
+    try {
+      const result = await this.tripService.generateItinerary(tripId, destination.destinationId);
+      this.itinerary.set(result);
+      setTimeout(() => document.getElementById('generated-itinerary')?.scrollIntoView({ behavior: 'smooth' }), 0);
+    } catch (error: any) {
+      this.itineraryError.set(error?.error?.detail || error?.error?.message || 'Impossible de générer cet itinéraire. Vérifiez que le backend est à jour.');
+    } finally {
+      this.itineraryLoading.set(false);
+    }
+  }
+
+  async generateAiGuide(): Promise<void> {
+    const itineraryId = this.itinerary()?.id;
+    if (!itineraryId) return;
+    this.aiGuideLoading.set(true);
+    this.aiGuideError.set('');
+    this.aiGuide.set(null);
+    try {
+      this.aiGuide.set(await this.tripService.generateAiGuide(itineraryId));
+    } catch (error: any) {
+      this.aiGuideError.set(error?.error?.detail || error?.error?.message || 'Le guide IA est indisponible. Vérifiez que APP_AI_ENABLED=true et que le fournisseur IA est configuré côté backend.');
+    } finally {
+      this.aiGuideLoading.set(false);
+    }
+  }
 
   dataStatusLabel(status?: string): string {
     if (status === 'VERIFIED') return 'Vérifié';

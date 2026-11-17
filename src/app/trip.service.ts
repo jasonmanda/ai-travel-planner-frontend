@@ -97,6 +97,57 @@ export interface DestinationCatalog {
   dataPolicy: string;
 }
 
+export interface ItineraryItem {
+  id: number;
+  sequence: number;
+  type: 'ATTRACTION' | 'ACTIVITY' | string;
+  title: string;
+  description?: string | null;
+  estimatedDurationMinutes?: number | null;
+  estimatedCost?: number | null;
+  currency?: string | null;
+  dataStatus?: string;
+  sourceName?: string | null;
+  sourceUrl?: string | null;
+  priceVerificationStatus?: string;
+  preferenceReason?: string | null;
+}
+
+export interface ItineraryDay {
+  id: number;
+  dayNumber: number;
+  title: string;
+  summary: string;
+  items: ItineraryItem[];
+}
+
+export interface ItineraryResponse {
+  id: string;
+  tripId: string;
+  destinationId: number;
+  title: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  days: ItineraryDay[];
+  planningWarnings: string[];
+  estimateDisclaimer: string;
+  planningPolicy: string;
+  recommendationEligibility?: {
+    candidateCount: number;
+    eligibleCount: number;
+    excludedCount: number;
+    policy: string;
+  };
+}
+
+export interface AiItineraryGuideResponse {
+  overview: string;
+  dayGuidance: { dayNumber: number; focus: string; rationale: string }[];
+  reminders: string[];
+  disclaimer: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private readonly http = inject(HttpClient);
@@ -145,6 +196,27 @@ export class TripService {
     return firstValueFrom(
       this.http.get<Recommendation[]>(
         `${this.apiUrl}/trips/${encodeURIComponent(tripId)}/recommendations`
+      )
+    );
+  }
+
+  /** POST /api/v1/trips/{id}/itinerary?destinationId=... : génère un itinéraire déterministe. */
+  generateItinerary(tripId: string, destinationId: number): Promise<ItineraryResponse> {
+    return firstValueFrom(
+      this.http.post<ItineraryResponse>(
+        `${this.apiUrl}/trips/${encodeURIComponent(tripId)}/itinerary`,
+        null,
+        { params: { destinationId: String(destinationId) } }
+      )
+    );
+  }
+
+  /** POST /api/v1/itineraries/{id}/ai-guide : demande le guide IA facultatif. */
+  generateAiGuide(itineraryId: string): Promise<AiItineraryGuideResponse> {
+    return firstValueFrom(
+      this.http.post<AiItineraryGuideResponse>(
+        `${this.apiUrl}/itineraries/${encodeURIComponent(itineraryId)}/ai-guide`,
+        null
       )
     );
   }
