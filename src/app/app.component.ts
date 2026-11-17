@@ -67,6 +67,11 @@ export class AppComponent {
 
   async generateRecommendations(): Promise<void> {
     this.errorMessage.set('');
+    this.itinerary.set(null);
+    this.itineraryError.set('');
+    this.aiGuide.set(null);
+    this.aiGuideError.set('');
+    this.selectedCatalog.set(null);
     if (!this.departureCity.trim() || !this.nationality.trim() || this.budget <= 0 || this.duration < 1) {
       this.errorMessage.set('Veuillez vérifier votre ville de départ, votre nationalité, votre budget et la durée du séjour.');
       return;
@@ -124,6 +129,7 @@ export class AppComponent {
     }
     this.itineraryLoading.set(true);
     this.itineraryError.set('');
+    this.itinerary.set(null);
     this.aiGuide.set(null);
     this.aiGuideError.set('');
     try {
@@ -142,6 +148,7 @@ export class AppComponent {
     if (!itineraryId) return;
     this.aiGuideLoading.set(true);
     this.aiGuideError.set('');
+    this.aiGuide.set(null);
     try {
       this.aiGuide.set(await this.tripService.generateAiGuide(itineraryId));
     } catch (error: any) {
