@@ -53,3 +53,16 @@ export OPENAI_MODEL="gpt-5-mini"
 Si le guide IA n'est pas activé, la génération de l'itinéraire déterministe reste disponible et l'interface affiche le message d'erreur renvoyé par l'API. La clé API doit rester uniquement côté backend et ne doit jamais être exposée dans Angular.
 
 Les conseils IA interprètent les données de l'itinéraire existant : ils n'ajoutent pas de lieux et ne valident pas les prix, horaires, formalités ou disponibilités.
+
+
+## Administration du catalogue
+
+Un bouton **Administration** ouvre l'espace de revue du catalogue. L'accès utilise les identifiants HTTP Basic configurés sur le backend avec `APP_ADMIN_USERNAME` et `APP_ADMIN_PASSWORD`.
+
+L'espace permet de :
+- parcourir et filtrer les activités et attractions ;
+- consulter les valeurs courantes, la source enregistrée et les six champs essentiels ;
+- sélectionner uniquement les champs effectivement contrôlés ;
+- enregistrer la source, son URL et les notes de vérification via les routes protégées du backend.
+
+Les identifiants restent uniquement en mémoire dans le composant Angular et ne sont pas enregistrés dans le stockage local ou les cookies. En production, servir l'application et l'API exclusivement en HTTPS. Ne cochez jamais un champ sans avoir contrôlé sa valeur dans une preuve adaptée. Les règles d'éligibilité et la classification des sources ne sont pas modifiées par l'interface.
